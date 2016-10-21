@@ -64,7 +64,7 @@ func (c *Client) Connect() error {
 			return newPathError("Connect", c.root, rs.StatusCode)
 		}
 
-		_, err = c.ReadDir("/")
+		//_, err = c.ReadDir("/")
 	}
 	return err
 }
@@ -211,11 +211,12 @@ func (c *Client) RemoveAll(path string) error {
 	}
 	rs.Body.Close()
 
-	if rs.StatusCode == 200 || rs.StatusCode == 404 || rs.StatusCode == 204 {
+	// Also error when there is a 404...
+	if rs.StatusCode == 200 || rs.StatusCode == 204 {
 		return nil
-	} else {
-		return newPathError("Remove", path, rs.StatusCode)
 	}
+
+	return newPathError("Remove", path, rs.StatusCode)
 }
 
 func (c *Client) Mkdir(path string, _ os.FileMode) error {
