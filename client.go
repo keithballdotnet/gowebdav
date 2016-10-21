@@ -76,6 +76,7 @@ type props struct {
 	Size     string   `xml:"DAV: prop>getcontentlength,omitempty"`
 	Modified string   `xml:"DAV: prop>getlastmodified,omitempty"`
 }
+
 type response struct {
 	Href  string  `xml:"DAV: href"`
 	Props []props `xml:"DAV: propstat"`
@@ -210,7 +211,7 @@ func (c *Client) RemoveAll(path string) error {
 	}
 	rs.Body.Close()
 
-	if rs.StatusCode == 200 || rs.StatusCode == 404 {
+	if rs.StatusCode == 200 || rs.StatusCode == 404 || rs.StatusCode == 204 {
 		return nil
 	} else {
 		return newPathError("Remove", path, rs.StatusCode)
@@ -305,7 +306,7 @@ func (c *Client) WriteStream(path string, stream io.Reader, _ os.FileMode) error
 	// TODO check if parent collection exists
 	s := c.put(path, stream)
 	switch s {
-	case 200, 201:
+	case 200, 201, 204:
 		return nil
 
 	default:
