@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -310,4 +311,37 @@ func (c *Client) WriteStream(path string, stream io.Reader, _ os.FileMode) error
 	default:
 		return newPathError("WriteStream", path, s)
 	}
+}
+
+func (c *Client) AddProperty(path, property_name, property_value string) error {
+	proppathrequest := `<?xml version="1.0" encoding="utf-8" ?>
+ <D:propertyupdate xmlns:D="DAV:" xmlns:Z="http://brabbler.ag/webdav">
+   <D:set>
+        <D:prop>
+           <Z:$prop_name$>$prop_value$</Z:$prop_name$>
+        </D:prop>
+   </D:set>
+ </D:propertyupdate>`
+
+	proppathrequest = strings.Replace(proppathrequest, "$prop_name$", property_name, -1)
+	proppathrequest = strings.Replace(proppathrequest, "$prop_value$", property_value, -1)
+	err := c.proppatch(path, bytes.NewReader([]byte(proppathrequest)))
+
+	if err != nil {
+		fmt.Printf("proppatch ERR: %+v", err)
+	}
+
+	return err
+}
+
+func (c *Client) PropFind(path, property_name string) (*http.Response, error) {
+	proppathrequest := `<?xml version="1.0" encoding="utf-8"?>
+				<D:propfind xmlns:D="DAV:">
+					<D:prop>
+						<$prop_name$ xmlns="http://brabbler.ag/webdav" />
+					</D:prop>
+				</D:propfind>`
+
+	proppathrequest = strings.Replace(proppathrequest, "$prop_name$", property_name, -1)
+	return c.custompropfind(path, bytes.NewReader([]byte(proppathrequest)))
 }

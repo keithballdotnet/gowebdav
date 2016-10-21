@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -114,4 +115,26 @@ func (c *Client) put(path string, stream io.Reader) int {
 	}
 	rs.Body.Close()
 	return rs.StatusCode
+}
+
+func (c *Client) proppatch(path string, stream io.Reader) error {
+	rs, err := c.req("PROPPATCH", path, stream, nil)
+
+	if rs.StatusCode != http.StatusMultiStatus {
+		data, err := ioutil.ReadAll(rs.Body)
+		return errors.New(fmt.Sprintf("PROPPATCH request failed. Reason: %d\nResponse: %+v\n%v, err: %+v", rs.StatusCode, rs, string(data), err))
+	}
+
+	return err
+}
+
+func (c *Client) custompropfind(path string, stream io.Reader) (*http.Response, error) {
+	rs, err := c.req("PROPFIND", path, stream, nil)
+
+	if rs.StatusCode != http.StatusMultiStatus {
+		data, err := ioutil.ReadAll(rs.Body)
+		return rs, errors.New(fmt.Sprintf("PROPFIND request failed. Reason: %d\nResponse: %+v\n%v, err: %+v", rs.StatusCode, rs, string(data), err))
+	}
+
+	return rs, err
 }
