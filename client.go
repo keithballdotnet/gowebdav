@@ -19,7 +19,20 @@ type Client struct {
 	c       *http.Client
 }
 
-func NewClient(uri string, user string, pw string) *Client {
+// New client with Bearer token
+func NewClient(uri, token string) *Client {
+	c := &Client{uri, make(http.Header), &http.Client{}}
+
+	auth := "Bearer " + token
+	c.headers.Add("Authorization", auth)
+
+	c.root = FixSlash(c.root)
+
+	return c
+}
+
+// New client with Basic authorization
+func NewClientWithBasic(uri string, user string, pw string) *Client {
 	c := &Client{uri, make(http.Header), &http.Client{}}
 
 	if len(user) > 0 && len(pw) > 0 {
@@ -35,6 +48,10 @@ func NewClient(uri string, user string, pw string) *Client {
 
 func (c *Client) SetHeader(key, value string) {
 	c.headers.Add(key, value)
+}
+
+func (c *Client) SetTimeout(timeout time.Duration) {
+	c.c.Timeout = timeout
 }
 
 func (c *Client) Connect() error {
